@@ -119,9 +119,9 @@ Self hosting Beeper is possible, but not an easy task right now. It requires exp
     
     ```bash
     docker run -it --rm \
+    --privileged \
     -w /work \
-    -v `pwd`:/work \
-    -v $HOME/.ssh/id_rsa:/root/.ssh/id_rsa:ro \
+    -v "$(pwd):/work" \
     --entrypoint=/bin/sh \
     docker.io/devture/ansible:2.13.6-r0-1
     ```
