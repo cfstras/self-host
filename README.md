@@ -123,7 +123,7 @@ Self hosting Beeper is possible, but not an easy task right now. It requires exp
     -w /work \
     -v "$(pwd):/work" \
     --entrypoint=/bin/sh \
-    docker.io/devture/ansible:2.13.6-r0-1
+    docker.io/devture/ansible:2.14.4-r0-0
     ```
     
 14. Your terminal should now show `/work`, then issue these commands
