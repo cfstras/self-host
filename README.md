@@ -68,65 +68,69 @@ Self hosting Beeper is possible, but not an easy task right now. It requires exp
 1. **Purchase a domain**
     1. We recommend Google Domains
     2. Insert this domain (eg `selfhostbeeper.com`) wherever `<insert_domain>` is shown in these instructions.
+
 2. **Select a hosting provider**
     1. We recommend a 2GB RAM 50GB disk Digital Ocean Droplet
     2. Record the Droplet IP to use in next step
+
 3. **Configure DNS**
-    
-    
     | Type | Host | Priority | Weight | Port | Target |
     | --- | --- | --- | --- | --- | --- |
     | A | matrix | - | - | - | droplet-ip |
     - Test your domain to make sure it’s pointing at the Droplet IP
         - `nslookup -type=A matrix.<insert_domain>`
-4. Install necessary tools on your desktop/laptop 
+
+4. Install necessary tools on your desktop/laptop
     
     ************Mac OS************
     `brew install git pwgen`
     ****************Linux****************
     `apt install git pwgen`
     
-5. **Download playbook to your desktop/laptop** 
-    
+5. **Download playbook to your desktop/laptop**
+
+    You can also do this and the following steps on your Matrix VM instead.  
     `git clone https://github.com/spantaleev/matrix-docker-ansible-deploy.git && cd matrix-docker-ansible-deploy` 
     
-6. Configure the installation
+7. Configure the installation
 `mkdir inventory/host_vars/matrix.<insert_domain>`
-7. `wget https://raw.githubusercontent.com/beeper/self-host/main/vars.yml`
-8. `cp vars.yml inventory/host_vars/matrix.<insert_domain>/vars.yml`
-9.  open`inventory/host_vars/matrix.<insert_domain>/vars.yml` in a text editor
+8. `wget https://raw.githubusercontent.com/beeper/self-host/main/vars.yml`
+9. `cp vars.yml inventory/host_vars/matrix.<insert_domain>/vars.yml`
+10.  open`inventory/host_vars/matrix.<insert_domain>/vars.yml` in a text editor
     1. Insert your `<insert_domain>` in line 12
     2. Enter a real email address in line 27 and 40
     3. Wherever `<create_secretkey>` shows up (eg line 22), switch back to your terminal, run `pwgen -s 64 1` and insert that key into the file
     4. Disable any bridges you do not want (saves RAM!) or enable Telegram by following instructions on Line 52
     5. Save the file.
-10. `cp examples/hosts inventory/hosts`
-11. Open `inventory/hosts` in a text editor
+11. `cp examples/hosts inventory/hosts`
+12. Open `inventory/hosts` in a text editor
     1. Replace `<your_domain>` with your domain
     2. Replace `your-server's external IP address>` with Droplet IP
-    3. add the following to the hosts file: `ansible_connection=community.docker.nsenter`. The hosts file shold now look like this:
-   ```
-   [matrix_servers]
-    matrix.YOUR.DOMAIN ansible_host=YOUR_SERVERS_IP ansible_connection=local ansible_ssh_user=root ansible_connection=community.docker.nsenter
-   ```
-12. Install docker and make sure it is started
+    3. If you are running these steps _on your Matrix VM_ instead of from your local computer, then:
+        1. Add the following to the hosts file: `ansible_connection=community.docker.nsenter`. The hosts file shold now look like this:
+        ```
+        [matrix_servers]
+        matrix.YOUR.DOMAIN ansible_host=YOUR_SERVERS_IP ansible_ssh_user=root ansible_connection=community.docker.nsenter
+        ```
+        2. In the upcoming "Run Ansible in Docker" step, remove the line `-v $HOME/.ssh/id_rsa:/root/.ssh/id_rsa:ro \`, but add `--privileged \` instead.
+13. Install docker and make sure it is started
     
     Mac OS - Follow instructions [https://docs.docker.com/desktop/install/mac-install](https://docs.docker.com/desktop/install/mac-install) 
     
     Linux - Follow instructions [https://docs.docker.com/desktop/install/linux-install/#generic-installation-steps](https://docs.docker.com/desktop/install/linux-install/#generic-installation-steps)
     
-13. Run Ansible in docker from the `/matrix-docker-ansible-deploy` directory. If this doesn't work, check the [playbook instructions](https://github.com/spantaleev/matrix-docker-ansible-deploy/blob/master/docs/ansible.md#using-ansible-via-docker).
+14. Run Ansible in Docker from the `/matrix-docker-ansible-deploy` directory. If this doesn't work, check the [playbook instructions](https://github.com/spantaleev/matrix-docker-ansible-deploy/blob/master/docs/ansible.md#using-ansible-via-docker).
     
     ```bash
     docker run -it --rm \
-    --privileged \
-    -w /work \
-    -v "$(pwd):/work" \
-    --entrypoint=/bin/sh \
-    docker.io/devture/ansible:2.14.4-r0-0
+      -v $HOME/.ssh/id_rsa:/root/.ssh/id_rsa:ro \
+      -w /work \
+      -v "$(pwd):/work" \
+      --entrypoint=/bin/sh \
+      docker.io/devture/ansible:2.14.5-r0-0
     ```
     
-14. Your terminal should now show `/work`, then issue these commands
+15. Your terminal should now show `/work`, then issue these commands
     1. `git config --global --add safe.directory /work`
     2. `make roles`
     3. `ansible-playbook -i inventory/hosts setup.yml --tags=install-all,ensure-matrix-users-created,start`
@@ -139,10 +143,10 @@ Self hosting Beeper is possible, but not an easy task right now. It requires exp
     
     `ansible-playbook -i inventory/hosts setup.yml --extra-vars='username=<insert_username> password=<your_password> admin=yes' --tags=register-user`
     
-15. In a browser, open our recommended Matrix client, [https://app.schildi.chat/#/login](https://app.schildi.chat/#/login) 
+16. In a browser, open our recommended Matrix client, [https://app.schildi.chat/#/login](https://app.schildi.chat/#/login) 
     1. Click ‘Edit’ and `https://matrix.<your_domain>` into the homeserver field, eg `https://matrix.beeptest.org` then click Continue
     2. Sign in with your username/password created in step 14e
-16. Set up each bridge
+17. Set up each bridge
 
     ![CleanShot 2023-01-26 at 23 08 40](https://user-images.githubusercontent.com/1048265/215031550-61f92954-6936-42af-bb4b-a8165e17389e.gif)
     
@@ -150,7 +154,7 @@ Self hosting Beeper is possible, but not an easy task right now. It requires exp
     2. Click the Whatsapp Bridge Bot chat in the left panel, then send the message `help` in the chat to see the list of commands. Each bridge has a slightly different sign in command, but it is usually `login`, `link`, or `login-qr`
     3. Repeat Step 16 for each bridge you would like to configure (eg `@instagrambot:<your_domain>`)
     4. Great! Now all your bridges are set up
-17. Set up mobile apps
+18. Set up mobile apps
 - Android - [SchildiChat](https://play.google.com/store/apps/details?id=de.spiritcroc.riotx)
 - iOS - Recommended apps: [Element](https://apps.apple.com/us/app/element-messenger/id1083446067) or [FluffyChat](https://apps.apple.com/us/app/fluffychat/id1551469600?platform=iphone) 
     
